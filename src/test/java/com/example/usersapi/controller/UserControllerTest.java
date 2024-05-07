@@ -1,5 +1,12 @@
 package com.example.usersapi.controller;
 
+import static com.example.usersapi.util.TestUtil.REQUEST_DTO;
+import static com.example.usersapi.util.TestUtil.RESPONSE_DTO1;
+import static com.example.usersapi.util.TestUtil.RESPONSE_DTO2;
+import static com.example.usersapi.util.TestUtil.RESPONSE_DTO3;
+import static com.example.usersapi.util.TestUtil.RESPONSE_DTO4;
+import static com.example.usersapi.util.TestUtil.RESPONSE_DTO5;
+import static com.example.usersapi.util.TestUtil.USER1;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -8,17 +15,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.usersapi.dto.CreateUserRequestDto;
 import com.example.usersapi.dto.UserPatchRequestDto;
 import com.example.usersapi.dto.UserResponseDto;
 import com.example.usersapi.dto.UserResponseDtoWrapper;
-import com.example.usersapi.model.User;
 import com.example.usersapi.service.impl.UserServiceImpl;
 import com.example.usersapi.util.TestUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -33,8 +36,6 @@ import org.springframework.test.web.servlet.MockMvc;
 @RunWith(SpringRunner.class)
 @WebMvcTest(UserController.class)
 class UserControllerTest {
-    private CreateUserRequestDto requestDto;
-    private UserResponseDto responseDto;
     @Autowired
     private MockMvc mvc;
     @Autowired
@@ -42,36 +43,22 @@ class UserControllerTest {
     @MockBean
     private UserServiceImpl userService;
 
-    @BeforeEach
-    void init() {
-        requestDto = new CreateUserRequestDto(
-                "user@gmail.com",
-                "Bob",
-                "Jackson",
-                "01/02/1990",
-                "414 Union Ave, Brooklyn, NY 11211",
-                "(111) 111-1111"
-        );
-        User user = TestUtil.getUserFromCreateUserDto(1L, requestDto);
-        responseDto = TestUtil.getResponseDtoFromUser(user);
-    }
-
     @Test
     @DisplayName("Add a new user")
     void addUser_ValidRequest_ShouldAddUser() throws Exception {
-        Mockito.when(userService.createUser(requestDto))
-                .thenReturn(new UserResponseDtoWrapper<>(responseDto));
-        String jasonObject = objectMapper.writeValueAsString(requestDto);
+        Mockito.when(userService.createUser(REQUEST_DTO))
+                .thenReturn(new UserResponseDtoWrapper<>(RESPONSE_DTO1));
+        String jasonObject = objectMapper.writeValueAsString(REQUEST_DTO);
         mvc.perform(post("/api/users")
                         .content(jasonObject)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.email").value(requestDto.email()))
-                .andExpect(jsonPath("$.data.address").value(requestDto.address()))
-                .andExpect(jsonPath("$.data.lastName").value(requestDto.lastName()))
-                .andExpect(jsonPath("$.data.birthDate").value(requestDto.birthDate()))
-                .andExpect(jsonPath("$.data.firstName").value(requestDto.firstName()))
-                .andExpect(jsonPath("$.data.phoneNumber").value(requestDto.phoneNumber()));
+                .andExpect(jsonPath("$.data.email").value(REQUEST_DTO.email()))
+                .andExpect(jsonPath("$.data.address").value(REQUEST_DTO.address()))
+                .andExpect(jsonPath("$.data.lastName").value(REQUEST_DTO.lastName()))
+                .andExpect(jsonPath("$.data.birthDate").value(REQUEST_DTO.birthDate()))
+                .andExpect(jsonPath("$.data.firstName").value(REQUEST_DTO.firstName()))
+                .andExpect(jsonPath("$.data.phoneNumber").value(REQUEST_DTO.phoneNumber()));
     }
 
     @Test
@@ -79,6 +66,7 @@ class UserControllerTest {
     void patchUser_ValidRequest_ShouldPatchUserInfo() throws Exception {
         UserPatchRequestDto patchRequestDto =
                 new UserPatchRequestDto(null, "Adam", null, null, null, "(111) 111-2222");
+        UserResponseDto responseDto = TestUtil.getResponseDtoFromUser(USER1);
         responseDto.setFirstName(patchRequestDto.firstName());
         responseDto.setPhoneNumber(patchRequestDto.phoneNumber());
         String jasonObject = objectMapper.writeValueAsString(patchRequestDto);
@@ -98,19 +86,19 @@ class UserControllerTest {
     @DisplayName("Update user")
     void updateUser_ValidRequest_ShouldUpdateUserInfo() throws Exception {
         Long userId = 1L;
-        Mockito.when(userService.updateUser(userId, requestDto))
-                .thenReturn(new UserResponseDtoWrapper<>(responseDto));
-        String jasonObject = objectMapper.writeValueAsString(requestDto);
+        Mockito.when(userService.updateUser(userId, REQUEST_DTO))
+                .thenReturn(new UserResponseDtoWrapper<>(RESPONSE_DTO1));
+        String jasonObject = objectMapper.writeValueAsString(REQUEST_DTO);
         mvc.perform(put("/api/users/" + userId)
                         .content(jasonObject)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.email").value(requestDto.email()))
-                .andExpect(jsonPath("$.data.address").value(requestDto.address()))
-                .andExpect(jsonPath("$.data.lastName").value(requestDto.lastName()))
-                .andExpect(jsonPath("$.data.birthDate").value(requestDto.birthDate()))
-                .andExpect(jsonPath("$.data.firstName").value(requestDto.firstName()))
-                .andExpect(jsonPath("$.data.phoneNumber").value(requestDto.phoneNumber()));
+                .andExpect(jsonPath("$.data.email").value(REQUEST_DTO.email()))
+                .andExpect(jsonPath("$.data.address").value(REQUEST_DTO.address()))
+                .andExpect(jsonPath("$.data.lastName").value(REQUEST_DTO.lastName()))
+                .andExpect(jsonPath("$.data.birthDate").value(REQUEST_DTO.birthDate()))
+                .andExpect(jsonPath("$.data.firstName").value(REQUEST_DTO.firstName()))
+                .andExpect(jsonPath("$.data.phoneNumber").value(REQUEST_DTO.phoneNumber()));
     }
 
     @Test
@@ -122,94 +110,78 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Search for users in birth dates range")
-    void searchByBirthDates_ValidRequest_ShouldReturnListOfUsersInDatesRange() throws Exception {
-        User user2 = new User();
-        user2.setId(2L);
-        user2.setFirstName("Kassandra");
-        user2.setLastName("Hernandez");
-        user2.setEmail("Kassandra@example.com");
-        user2.setBirthDate(LocalDate.of(1985, 5, 15));
-
-        User user3 = new User();
-        user3.setId(3L);
-        user3.setFirstName("William");
-        user3.setLastName("Williamson");
-        user3.setEmail("William@example.com");
-        user3.setBirthDate(LocalDate.of(1988, 9, 20));
-
-        User user4 = new User();
-        user4.setId(4L);
-        user4.setFirstName("Kevin");
-        user4.setLastName("Thompson");
-        user4.setEmail("Kevin@example.com");
-        user4.setBirthDate(LocalDate.of(1995, 3, 10));
-
-        User user5 = new User();
-        user5.setId(5L);
-        user5.setFirstName("Matt");
-        user5.setLastName("Wallace");
-        user5.setEmail("Matt@example.com");
-        user5.setBirthDate(LocalDate.of(1992, 11, 28));
-
-        UserResponseDto responseDto3 = TestUtil.getResponseDtoFromUser(user3);
-        UserResponseDto responseDto4 = TestUtil.getResponseDtoFromUser(user4);
-
+    @DisplayName("Search for users in birth dates range from 02/03/1986 to 10/03/1995")
+    void searchByBirthDates_DatesRangeFrom1986To1995_ShouldReturnListOfUsersInDatesRange()
+            throws Exception {
         String from = "02/03/1986";
         String to = "10/03/1995";
         Mockito.when(userService.searchByBirthDates(from, to)).thenReturn(
-                new UserResponseDtoWrapper<>(List.of(responseDto, responseDto3, responseDto4)));
+                new UserResponseDtoWrapper<>(List.of(RESPONSE_DTO1, RESPONSE_DTO3, RESPONSE_DTO4)));
         String getUrl = "/api/users/search?fromDate=%s&toDate=%s";
         mvc.perform(get(String.format(getUrl, from, to)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.size()").value(3))
-                .andExpect(jsonPath("$.data[0].firstName").value(responseDto.getFirstName()))
-                .andExpect(jsonPath("$.data[0].birthDate").value(responseDto.getBirthDate()))
-                .andExpect(jsonPath("$.data[0].email").value(responseDto.getEmail()))
-                .andExpect(jsonPath("$.data[1].firstName").value(responseDto3.getFirstName()))
-                .andExpect(jsonPath("$.data[1].birthDate").value(responseDto3.getBirthDate()))
-                .andExpect(jsonPath("$.data[1].email").value(responseDto3.getEmail()))
-                .andExpect(jsonPath("$.data[2].firstName").value(responseDto4.getFirstName()))
-                .andExpect(jsonPath("$.data[2].birthDate").value(responseDto4.getBirthDate()))
-                .andExpect(jsonPath("$.data[2].email").value(responseDto4.getEmail()));
+                .andExpect(jsonPath("$.data[0].firstName").value(RESPONSE_DTO1.getFirstName()))
+                .andExpect(jsonPath("$.data[0].birthDate").value(RESPONSE_DTO1.getBirthDate()))
+                .andExpect(jsonPath("$.data[0].email").value(RESPONSE_DTO1.getEmail()))
+                .andExpect(jsonPath("$.data[1].firstName").value(RESPONSE_DTO3.getFirstName()))
+                .andExpect(jsonPath("$.data[1].birthDate").value(RESPONSE_DTO3.getBirthDate()))
+                .andExpect(jsonPath("$.data[1].email").value(RESPONSE_DTO3.getEmail()))
+                .andExpect(jsonPath("$.data[2].firstName").value(RESPONSE_DTO4.getFirstName()))
+                .andExpect(jsonPath("$.data[2].birthDate").value(RESPONSE_DTO4.getBirthDate()))
+                .andExpect(jsonPath("$.data[2].email").value(RESPONSE_DTO4.getEmail()));
+    }
 
-        UserResponseDto responseDto2 = TestUtil.getResponseDtoFromUser(user2);
-        UserResponseDto responseDto5 = TestUtil.getResponseDtoFromUser(user5);
+    @Test
+    @DisplayName("Search for users in birth dates range from 15/04/1985 to 10/03/2000")
+    void searchByBirthDates_DatesRangeFrom1985To2000_ShouldReturnListOfUsersInDatesRange()
+            throws Exception {
+        String from = "15/04/1985";
+        String to = "10/03/2000";
 
-        from = "15/04/1985";
-        to = "10/03/2000";
         Mockito.when(userService.searchByBirthDates(from, to))
                 .thenReturn(new UserResponseDtoWrapper<>(List.of(
-                        responseDto, responseDto2, responseDto3, responseDto4, responseDto5
+                        RESPONSE_DTO1,
+                        RESPONSE_DTO2,
+                        RESPONSE_DTO3,
+                        RESPONSE_DTO4,
+                        RESPONSE_DTO5
                 )));
+        String getUrl = "/api/users/search?fromDate=%s&toDate=%s";
         mvc.perform(get(String.format(getUrl, from, to)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.size()").value(5))
-                .andExpect(jsonPath("$.data[0].firstName").value(responseDto.getFirstName()))
-                .andExpect(jsonPath("$.data[0].birthDate").value(responseDto.getBirthDate()))
-                .andExpect(jsonPath("$.data[0].email").value(responseDto.getEmail()))
-                .andExpect(jsonPath("$.data[1].firstName").value(responseDto2.getFirstName()))
-                .andExpect(jsonPath("$.data[1].birthDate").value(responseDto2.getBirthDate()))
-                .andExpect(jsonPath("$.data[1].email").value(responseDto2.getEmail()))
-                .andExpect(jsonPath("$.data[2].firstName").value(responseDto3.getFirstName()))
-                .andExpect(jsonPath("$.data[2].birthDate").value(responseDto3.getBirthDate()))
-                .andExpect(jsonPath("$.data[2].email").value(responseDto3.getEmail()))
-                .andExpect(jsonPath("$.data[3].firstName").value(responseDto4.getFirstName()))
-                .andExpect(jsonPath("$.data[3].birthDate").value(responseDto4.getBirthDate()))
-                .andExpect(jsonPath("$.data[3].email").value(responseDto4.getEmail()))
-                .andExpect(jsonPath("$.data[4].firstName").value(responseDto5.getFirstName()))
-                .andExpect(jsonPath("$.data[4].birthDate").value(responseDto5.getBirthDate()))
-                .andExpect(jsonPath("$.data[4].email").value(responseDto5.getEmail()));
+                .andExpect(jsonPath("$.data[0].firstName").value(RESPONSE_DTO1.getFirstName()))
+                .andExpect(jsonPath("$.data[0].birthDate").value(RESPONSE_DTO1.getBirthDate()))
+                .andExpect(jsonPath("$.data[0].email").value(RESPONSE_DTO1.getEmail()))
+                .andExpect(jsonPath("$.data[1].firstName").value(RESPONSE_DTO2.getFirstName()))
+                .andExpect(jsonPath("$.data[1].birthDate").value(RESPONSE_DTO2.getBirthDate()))
+                .andExpect(jsonPath("$.data[1].email").value(RESPONSE_DTO2.getEmail()))
+                .andExpect(jsonPath("$.data[2].firstName").value(RESPONSE_DTO3.getFirstName()))
+                .andExpect(jsonPath("$.data[2].birthDate").value(RESPONSE_DTO3.getBirthDate()))
+                .andExpect(jsonPath("$.data[2].email").value(RESPONSE_DTO3.getEmail()))
+                .andExpect(jsonPath("$.data[3].firstName").value(RESPONSE_DTO4.getFirstName()))
+                .andExpect(jsonPath("$.data[3].birthDate").value(RESPONSE_DTO4.getBirthDate()))
+                .andExpect(jsonPath("$.data[3].email").value(RESPONSE_DTO4.getEmail()))
+                .andExpect(jsonPath("$.data[4].firstName").value(RESPONSE_DTO5.getFirstName()))
+                .andExpect(jsonPath("$.data[4].birthDate").value(RESPONSE_DTO5.getBirthDate()))
+                .andExpect(jsonPath("$.data[4].email").value(RESPONSE_DTO5.getEmail()));
+    }
 
-        from = "15/04/1990";
-        to = "10/03/2003";
+    @Test
+    @DisplayName("Search for users in birth dates range from 15/04/1990 to 10/03/2003")
+    void searchByBirthDates_DatesRangeFrom1990To2003_ShouldReturnListOfUsersInDatesRange()
+            throws Exception {
+        String from = "15/04/1990";
+        String to = "10/03/2003";
         Mockito.when(userService.searchByBirthDates(from, to))
-                .thenReturn(new UserResponseDtoWrapper<>(List.of(responseDto5)));
+                .thenReturn(new UserResponseDtoWrapper<>(List.of(RESPONSE_DTO5)));
+        String getUrl = "/api/users/search?fromDate=%s&toDate=%s";
         mvc.perform(get(String.format(getUrl, from, to)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.size()").value(1))
-                .andExpect(jsonPath("$.data[0].firstName").value(responseDto5.getFirstName()))
-                .andExpect(jsonPath("$.data[0].birthDate").value(responseDto5.getBirthDate()))
-                .andExpect(jsonPath("$.data[0].email").value(responseDto5.getEmail()));
+                .andExpect(jsonPath("$.data[0].firstName").value(RESPONSE_DTO5.getFirstName()))
+                .andExpect(jsonPath("$.data[0].birthDate").value(RESPONSE_DTO5.getBirthDate()))
+                .andExpect(jsonPath("$.data[0].email").value(RESPONSE_DTO5.getEmail()));
     }
 }
