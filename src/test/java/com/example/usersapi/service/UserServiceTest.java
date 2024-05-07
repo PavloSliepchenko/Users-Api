@@ -9,9 +9,9 @@ import com.example.usersapi.mapper.UserMapper;
 import com.example.usersapi.model.User;
 import com.example.usersapi.repository.UserRepository;
 import com.example.usersapi.service.impl.UserServiceImpl;
+import com.example.usersapi.util.TestUtil;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
@@ -29,7 +29,6 @@ class UserServiceTest {
     private CreateUserRequestDto requestDto;
     private User user;
     private UserResponseDto responseDto;
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     @Mock
     private UserRepository userRepository;
     @Mock
@@ -47,8 +46,8 @@ class UserServiceTest {
                 "414 Union Ave, Brooklyn, NY 11211",
                 "(111) 111-1111"
         );
-        user = getUserFromCreateUserDto(1L, requestDto);
-        responseDto = getResponseDtoFromUser(user);
+        user = TestUtil.getUserFromCreateUserDto(1L, requestDto);
+        responseDto = TestUtil.getResponseDtoFromUser(user);
 
         Field field = userService.getClass().getDeclaredField("minAge");
         field.setAccessible(true);
@@ -82,7 +81,7 @@ class UserServiceTest {
                 null
         );
 
-        User user = getUserFromCreateUserDto(1L, requestDto);
+        User user = TestUtil.getUserFromCreateUserDto(1L, requestDto);
         Mockito.when(userMapper.toModel(requestDto)).thenReturn(user);
 
         Assertions.assertThrows(RegistrationException.class,
@@ -103,7 +102,7 @@ class UserServiceTest {
         updatedUser.setPhoneNumber(user.getPhoneNumber());
         updatedUser.setBirthDate(user.getBirthDate());
 
-        UserResponseDto updatedResponseDto = getResponseDtoFromUser(updatedUser);
+        UserResponseDto updatedResponseDto = TestUtil.getResponseDtoFromUser(updatedUser);
 
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         Mockito.when(userRepository.save(user)).thenReturn(user);
@@ -148,8 +147,8 @@ class UserServiceTest {
                 "(222) 222-2222"
         );
         Long userId = 1L;
-        User updatedUser = getUserFromCreateUserDto(userId, requestDto);
-        UserResponseDto updatedResponseDto = getResponseDtoFromUser(updatedUser);
+        User updatedUser = TestUtil.getUserFromCreateUserDto(userId, requestDto);
+        UserResponseDto updatedResponseDto = TestUtil.getResponseDtoFromUser(updatedUser);
 
         Mockito.when(userRepository.existsById(Mockito.anyLong())).thenReturn(true);
         Mockito.when(userMapper.toModel(requestDto)).thenReturn(updatedUser);
@@ -196,10 +195,10 @@ class UserServiceTest {
         user5.setEmail("user5@example.com");
         user5.setBirthDate(LocalDate.of(1992, 11, 28));
 
-        UserResponseDto responseDto2 = getResponseDtoFromUser(user2);
-        UserResponseDto responseDto3 = getResponseDtoFromUser(user3);
-        UserResponseDto responseDto4 = getResponseDtoFromUser(user4);
-        UserResponseDto responseDto5 = getResponseDtoFromUser(user5);
+        UserResponseDto responseDto2 = TestUtil.getResponseDtoFromUser(user2);
+        UserResponseDto responseDto3 = TestUtil.getResponseDtoFromUser(user3);
+        UserResponseDto responseDto4 = TestUtil.getResponseDtoFromUser(user4);
+        UserResponseDto responseDto5 = TestUtil.getResponseDtoFromUser(user5);
 
         Mockito.when(userMapper.toDto(user)).thenReturn(responseDto);
         Mockito.when(userMapper.toDto(user2)).thenReturn(responseDto2);
@@ -209,8 +208,10 @@ class UserServiceTest {
 
         String from = "02/03/1986";
         String to = "10/03/1995";
-        Mockito.when(userRepository.findByBirthDateBetween(LocalDate.parse(from, formatter),
-                LocalDate.parse(to, formatter))).thenReturn(List.of(user, user3, user4));
+        Mockito.when(userRepository.findByBirthDateBetween(
+                LocalDate.parse(from, TestUtil.FORMATTER),
+                LocalDate.parse(to, TestUtil.FORMATTER))
+        ).thenReturn(List.of(user, user3, user4));
         List<UserResponseDto> expected = List.of(responseDto, responseDto3, responseDto4);
         List<UserResponseDto> actual = userService.searchByBirthDates(from, to).getData();
         Assertions.assertEquals(expected.size(), actual.size());
@@ -218,9 +219,10 @@ class UserServiceTest {
 
         from = "15/04/1985";
         to = "10/03/2000";
-        Mockito.when(userRepository.findByBirthDateBetween(LocalDate.parse(from, formatter),
-                        LocalDate.parse(to, formatter)))
-                .thenReturn(List.of(user, user2, user3, user4, user5));
+        Mockito.when(userRepository.findByBirthDateBetween(
+                LocalDate.parse(from, TestUtil.FORMATTER),
+                LocalDate.parse(to, TestUtil.FORMATTER))
+        ).thenReturn(List.of(user, user2, user3, user4, user5));
         expected = List.of(responseDto, responseDto2, responseDto3, responseDto4, responseDto5);
         actual = userService.searchByBirthDates(from, to).getData();
         Assertions.assertEquals(expected.size(), actual.size());
@@ -228,35 +230,13 @@ class UserServiceTest {
 
         from = "15/04/1990";
         to = "10/03/2003";
-        Mockito.when(userRepository.findByBirthDateBetween(LocalDate.parse(from, formatter),
-                LocalDate.parse(to, formatter))).thenReturn(List.of(user5));
+        Mockito.when(userRepository.findByBirthDateBetween(
+                LocalDate.parse(from, TestUtil.FORMATTER),
+                LocalDate.parse(to, TestUtil.FORMATTER))
+        ).thenReturn(List.of(user5));
         expected = List.of(responseDto5);
         actual = userService.searchByBirthDates(from, to).getData();
         Assertions.assertEquals(expected.size(), actual.size());
         Assertions.assertTrue(actual.containsAll(expected));
-    }
-
-    private User getUserFromCreateUserDto(Long userId, CreateUserRequestDto requestDto) {
-        User resulUser = new User();
-        resulUser.setId(userId);
-        resulUser.setEmail(requestDto.email());
-        resulUser.setFirstName(requestDto.firstName());
-        resulUser.setLastName(requestDto.lastName());
-        resulUser.setBirthDate(LocalDate.parse(requestDto.birthDate(), formatter));
-        resulUser.setAddress(requestDto.address());
-        resulUser.setPhoneNumber(requestDto.phoneNumber());
-        return resulUser;
-    }
-
-    private UserResponseDto getResponseDtoFromUser(User user) {
-        UserResponseDto userResponseDto = new UserResponseDto();
-        userResponseDto.setId(user.getId());
-        userResponseDto.setEmail(user.getEmail());
-        userResponseDto.setFirstName(user.getFirstName());
-        userResponseDto.setLastName(user.getLastName());
-        userResponseDto.setBirthDate(user.getBirthDate().format(formatter));
-        userResponseDto.setAddress(user.getAddress());
-        userResponseDto.setPhoneNumber(user.getPhoneNumber());
-        return userResponseDto;
     }
 }
