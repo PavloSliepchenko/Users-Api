@@ -1,5 +1,17 @@
 package com.example.usersapi.service;
 
+import static com.example.usersapi.util.TestUtil.FORMATTER;
+import static com.example.usersapi.util.TestUtil.RESPONSE_DTO1;
+import static com.example.usersapi.util.TestUtil.RESPONSE_DTO2;
+import static com.example.usersapi.util.TestUtil.RESPONSE_DTO3;
+import static com.example.usersapi.util.TestUtil.RESPONSE_DTO4;
+import static com.example.usersapi.util.TestUtil.RESPONSE_DTO5;
+import static com.example.usersapi.util.TestUtil.USER1;
+import static com.example.usersapi.util.TestUtil.USER2;
+import static com.example.usersapi.util.TestUtil.USER3;
+import static com.example.usersapi.util.TestUtil.USER4;
+import static com.example.usersapi.util.TestUtil.USER5;
+
 import com.example.usersapi.dto.CreateUserRequestDto;
 import com.example.usersapi.dto.UserPatchRequestDto;
 import com.example.usersapi.dto.UserResponseDto;
@@ -26,9 +38,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
-    private CreateUserRequestDto requestDto;
-    private User user;
-    private UserResponseDto responseDto;
     @Mock
     private UserRepository userRepository;
     @Mock
@@ -38,17 +47,6 @@ class UserServiceTest {
 
     @BeforeEach
     void init() throws Exception {
-        requestDto = new CreateUserRequestDto(
-                "user@gmail.com",
-                "Bob",
-                "Jackson",
-                "01/02/1990",
-                "414 Union Ave, Brooklyn, NY 11211",
-                "(111) 111-1111"
-        );
-        user = TestUtil.getUserFromCreateUserDto(1L, requestDto);
-        responseDto = TestUtil.getResponseDtoFromUser(user);
-
         Field field = userService.getClass().getDeclaredField("minAge");
         field.setAccessible(true);
         field.setInt(userService, 18);
@@ -57,16 +55,16 @@ class UserServiceTest {
     @Test
     @DisplayName("Add a new used to db")
     void createUser_ValidRequest_ShouldAddUser() {
-        Mockito.when(userMapper.toModel(requestDto)).thenReturn(user);
-        Mockito.when(userRepository.save(user)).thenReturn(user);
-        Mockito.when(userMapper.toDto(user)).thenReturn(responseDto);
+        Mockito.when(userMapper.toModel(TestUtil.REQUEST_DTO)).thenReturn(USER1);
+        Mockito.when(userRepository.save(USER1)).thenReturn(USER1);
+        Mockito.when(userMapper.toDto(USER1)).thenReturn(RESPONSE_DTO1);
 
-        UserResponseDto actual = userService.createUser(requestDto).getData();
+        UserResponseDto actual = userService.createUser(TestUtil.REQUEST_DTO).getData();
 
-        Assertions.assertEquals(responseDto.getId(), actual.getId());
-        Assertions.assertEquals(responseDto.getBirthDate(), actual.getBirthDate());
-        Assertions.assertEquals(responseDto.getFirstName(), actual.getFirstName());
-        Assertions.assertEquals(responseDto.getAddress(), actual.getAddress());
+        Assertions.assertEquals(RESPONSE_DTO1.getId(), actual.getId());
+        Assertions.assertEquals(RESPONSE_DTO1.getBirthDate(), actual.getBirthDate());
+        Assertions.assertEquals(RESPONSE_DTO1.getFirstName(), actual.getFirstName());
+        Assertions.assertEquals(RESPONSE_DTO1.getAddress(), actual.getAddress());
     }
 
     @Test
@@ -95,17 +93,17 @@ class UserServiceTest {
         Long userId = 1L;
         User updatedUser = new User();
         updatedUser.setId(userId);
-        updatedUser.setEmail(user.getEmail());
+        updatedUser.setEmail(USER1.getEmail());
         updatedUser.setLastName(newLastName);
-        updatedUser.setFirstName(user.getFirstName());
-        updatedUser.setAddress(user.getAddress());
-        updatedUser.setPhoneNumber(user.getPhoneNumber());
-        updatedUser.setBirthDate(user.getBirthDate());
+        updatedUser.setFirstName(USER1.getFirstName());
+        updatedUser.setAddress(USER1.getAddress());
+        updatedUser.setPhoneNumber(USER1.getPhoneNumber());
+        updatedUser.setBirthDate(USER1.getBirthDate());
 
         UserResponseDto updatedResponseDto = TestUtil.getResponseDtoFromUser(updatedUser);
 
-        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        Mockito.when(userRepository.save(user)).thenReturn(user);
+        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(USER1));
+        Mockito.when(userRepository.save(USER1)).thenReturn(USER1);
         Mockito.when(userMapper.toDto(updatedUser)).thenReturn(updatedResponseDto);
 
         UserPatchRequestDto userPatchRequestDto = new UserPatchRequestDto(
@@ -165,77 +163,65 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Search for users in birth dates range")
-    void searchByBirthDates_ValidRequest_ShouldReturnListOfUsersInDatesRange() {
-        User user2 = new User();
-        user2.setId(2L);
-        user2.setFirstName("Jane");
-        user2.setLastName("Smith");
-        user2.setEmail("user2@example.com");
-        user2.setBirthDate(LocalDate.of(1985, 5, 15));
-
-        User user3 = new User();
-        user3.setId(3L);
-        user3.setFirstName("Alice");
-        user3.setLastName("Johnson");
-        user3.setEmail("user3@example.com");
-        user3.setBirthDate(LocalDate.of(1988, 9, 20));
-
-        User user4 = new User();
-        user4.setId(4L);
-        user4.setFirstName("Bob");
-        user4.setLastName("Brown");
-        user4.setEmail("user4@example.com");
-        user4.setBirthDate(LocalDate.of(1995, 3, 10));
-
-        User user5 = new User();
-        user5.setId(5L);
-        user5.setFirstName("Emily");
-        user5.setLastName("Davis");
-        user5.setEmail("user5@example.com");
-        user5.setBirthDate(LocalDate.of(1992, 11, 28));
-
-        UserResponseDto responseDto2 = TestUtil.getResponseDtoFromUser(user2);
-        UserResponseDto responseDto3 = TestUtil.getResponseDtoFromUser(user3);
-        UserResponseDto responseDto4 = TestUtil.getResponseDtoFromUser(user4);
-        UserResponseDto responseDto5 = TestUtil.getResponseDtoFromUser(user5);
-
-        Mockito.when(userMapper.toDto(user)).thenReturn(responseDto);
-        Mockito.when(userMapper.toDto(user2)).thenReturn(responseDto2);
-        Mockito.when(userMapper.toDto(user3)).thenReturn(responseDto3);
-        Mockito.when(userMapper.toDto(user4)).thenReturn(responseDto4);
-        Mockito.when(userMapper.toDto(user5)).thenReturn(responseDto5);
+    @DisplayName("Search for users in birth dates range from 02/03/1986 to 10/03/1995")
+    void searchByBirthDates_DatesRangeFrom1986To1995_ShouldReturnListOfUsersInDatesRange() {
+        Mockito.when(userMapper.toDto(USER1)).thenReturn(RESPONSE_DTO1);
+        Mockito.when(userMapper.toDto(USER3)).thenReturn(RESPONSE_DTO3);
+        Mockito.when(userMapper.toDto(USER4)).thenReturn(RESPONSE_DTO4);
 
         String from = "02/03/1986";
         String to = "10/03/1995";
         Mockito.when(userRepository.findByBirthDateBetween(
-                LocalDate.parse(from, TestUtil.FORMATTER),
-                LocalDate.parse(to, TestUtil.FORMATTER))
-        ).thenReturn(List.of(user, user3, user4));
-        List<UserResponseDto> expected = List.of(responseDto, responseDto3, responseDto4);
+                LocalDate.parse(from, FORMATTER),
+                LocalDate.parse(to, FORMATTER))
+        ).thenReturn(List.of(USER1, USER3, USER4));
+        List<UserResponseDto> expected =
+                List.of(RESPONSE_DTO1, RESPONSE_DTO3, RESPONSE_DTO4);
         List<UserResponseDto> actual = userService.searchByBirthDates(from, to).getData();
         Assertions.assertEquals(expected.size(), actual.size());
         Assertions.assertTrue(actual.containsAll(expected));
+    }
 
-        from = "15/04/1985";
-        to = "10/03/2000";
+    @Test
+    @DisplayName("Search for users in birth dates range from 15/04/1985 to 10/03/2000")
+    void searchByBirthDates_DatesRangeFrom1985To2000_ShouldReturnListOfUsersInDatesRange() {
+        Mockito.when(userMapper.toDto(USER1)).thenReturn(RESPONSE_DTO1);
+        Mockito.when(userMapper.toDto(USER2)).thenReturn(RESPONSE_DTO2);
+        Mockito.when(userMapper.toDto(USER3)).thenReturn(RESPONSE_DTO3);
+        Mockito.when(userMapper.toDto(USER4)).thenReturn(RESPONSE_DTO4);
+        Mockito.when(userMapper.toDto(USER5)).thenReturn(RESPONSE_DTO5);
+
+        String from = "15/04/1985";
+        String to = "10/03/2000";
         Mockito.when(userRepository.findByBirthDateBetween(
-                LocalDate.parse(from, TestUtil.FORMATTER),
-                LocalDate.parse(to, TestUtil.FORMATTER))
-        ).thenReturn(List.of(user, user2, user3, user4, user5));
-        expected = List.of(responseDto, responseDto2, responseDto3, responseDto4, responseDto5);
-        actual = userService.searchByBirthDates(from, to).getData();
+                LocalDate.parse(from, FORMATTER),
+                LocalDate.parse(to, FORMATTER))
+        ).thenReturn(List.of(USER1, USER2, USER3, USER4, USER5));
+        List<UserResponseDto> expected = List.of(
+                RESPONSE_DTO1,
+                RESPONSE_DTO2,
+                RESPONSE_DTO3,
+                RESPONSE_DTO4,
+                RESPONSE_DTO5
+        );
+        List<UserResponseDto> actual = userService.searchByBirthDates(from, to).getData();
         Assertions.assertEquals(expected.size(), actual.size());
         Assertions.assertTrue(actual.containsAll(expected));
+    }
 
-        from = "15/04/1990";
-        to = "10/03/2003";
+    @Test
+    @DisplayName("Search for users in birth dates range from 15/04/1990 to 10/03/2003")
+    void searchByBirthDates_DatesRangeFrom1990To2003_ShouldReturnListOfUsersInDatesRange() {
+        Mockito.when(userMapper.toDto(USER5)).thenReturn(RESPONSE_DTO5);
+
+        String from = "15/04/1990";
+        String to = "10/03/2003";
         Mockito.when(userRepository.findByBirthDateBetween(
-                LocalDate.parse(from, TestUtil.FORMATTER),
-                LocalDate.parse(to, TestUtil.FORMATTER))
-        ).thenReturn(List.of(user5));
-        expected = List.of(responseDto5);
-        actual = userService.searchByBirthDates(from, to).getData();
+                LocalDate.parse(from, FORMATTER),
+                LocalDate.parse(to, FORMATTER))
+        ).thenReturn(List.of(USER5));
+        List<UserResponseDto> expected = List.of(RESPONSE_DTO5);
+        List<UserResponseDto> actual = userService.searchByBirthDates(from, to).getData();
         Assertions.assertEquals(expected.size(), actual.size());
         Assertions.assertTrue(actual.containsAll(expected));
     }
